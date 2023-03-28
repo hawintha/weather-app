@@ -10,7 +10,136 @@
 </head>
 
 <body>
+    <video src="videos/garden-day.mp4" type="video/mp4" autoplay muted loop></video>
+
+    <div class="city">
+        <lord-icon class="location" src="https://cdn.lordicon.com/elzslyvl.json" style="width:40px;height:40px"
+            colors="primary:#fdfbfb,secondary:#ebedee"></lord-icon>
+        <input type="text" name="" id="" placeholder="City" value="Seattle">
+        <lord-icon class="search hidden" src="https://cdn.lordicon.com/zniqnylq.json" style="width:35px;height:35px"
+            colors="primary:#fdfbfb,secondary:#ebedee" trigger="loop-on-hover" delay="1000"></lord-icon>
+    </div>
+
+    <section class="weather-today">
+        <div class="current">
+            <img src="icons/partly-cloudy-day.svg" alt="Partly cloudy day">
+            <span>70</span>
+            <div class="degrees">
+                <span>°</span>
+                <div class="units">
+                    <span class="fahrenheit">F</span>
+                    <span class="celsius faded">C</span>
+                </div>
+            </div>
+        </div>
+        <div class="details">
+            <span class="description">Partly Cloudy</span>
+            <div class="high-low">
+                <span class="high">High: 80°</span>
+                <span>/</span>
+                <span>Low: 50°</span>
+            </div>
+            <span class="feels-like">Feels Like: 67°</span>
+            <span class="wind">Wind: 5 mph</span>
+            <span class="humidity">Humidity: 41%</span>
+            <span class="updated">Updated: 12:45 PM</span>
+        </div>
+    </section>
+
+    <section class="moment">
+        <div class="time">
+            <span class="hours"></span>
+            <span class="colon">:</span>
+            <span class="minutes"></span>
+            <div class="right">
+                <span class="meridiem"></span>
+                <span class="seconds"></span>
+            </div>
+        </div>
+        <div class="date">
+            <span class="weekday"></span>,
+            <span class="month"></span>
+            <span class="day"></span>
+        </div>
+    </section>
+
+    <section class="daily-weather">
+        <div>
+            <span>Today</span>
+            <img src="icons/sunny.svg" alt="Sunny">
+            <div class="high-low">
+                <span class="high">80°</span>
+                <span>/</span>
+                <span class="low">50°</span>
+            </div>
+        </div>
+        <div>
+            <span>Tomorrow</span>
+            <img src="icons/cloudy.svg" alt="Cloudy">
+            <div class="high-low">
+                <span class="high">80°</span>
+                <span>/</span>
+                <span class="low">50°</span>
+            </div>
+        </div>
+        <div>
+            <span>Wednesday</span>
+            <img src="icons/rain.svg" alt="Rain">
+            <div class="high-low">
+                <span class="high">80°</span>
+                <span>/</span>
+                <span class="low">50°</span>
+            </div>
+        </div>
+        <div>
+            <span>Thursday</span>
+            <img src="icons/snow.svg" alt="Snow">
+            <div class="high-low">
+                <span class="high">80°</span>
+                <span>/</span>
+                <span class="low">50°</span>
+            </div>
+        </div>
+        <div>
+            <span>Friday</span>
+            <img src="icons/partly-cloudy-day.svg" alt="Partly cloudy day">
+            <div class="high-low">
+                <span class="high">80°</span>
+                <span>/</span>
+                <span class="low">50°</span>
+            </div>
+        </div>
+        <div>
+            <span>Saturday</span>
+            <img src="icons/partly-cloudy-day-rain.svg" alt="Partly cloudy day with rain">
+            <div class="high-low">
+                <span class="high">80°</span>
+                <span>/</span>
+                <span class="low">50°</span>
+            </div>
+        </div>
+        <div>
+            <span>Sunday</span>
+            <img src="icons/partly-cloudy-day-snow.svg" alt="Partly cloudy day with snow">
+            <div class="high-low">
+                <span class="high">80°</span>
+                <span>/</span>
+                <span class="low">50°</span>
+            </div>
+        </div>
+        <div>
+            <span>Monday</span>
+            <img src="icons/thunderstorms.svg" alt="Thunderstorms">
+            <div class="high-low">
+                <span class="high">80°</span>
+                <span>/</span>
+                <span class="low">50°</span>
+            </div>
+        </div>
+    </section>
+
     <script src="main.js"></script>
+    <script src="https://cdn.lordicon.com/qjzruarw.js"></script>
 </body>
 
 </html>
