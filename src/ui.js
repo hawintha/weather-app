@@ -1,90 +1,105 @@
+import { geocode } from './api.js';
+
 const moment = (() => {
     let hours = document.querySelector('.hours');
     let minutes = document.querySelector('.minutes');
     let seconds = document.querySelector('.seconds');
     let meridiem = document.querySelector('.meridiem');
 
-    const update = () => {
-        let today = new Date();
-        let month = today.toLocaleString('default', { month: 'long' });
-        let weekday = today.toLocaleString('default', { weekday: 'long' });
-        let day = today.getDate();
-        let time = {
-            hours: today.getHours(),
-            minutes: today.getMinutes(),
-            seconds: today.getSeconds(),
-            meridiem: "AM"
-        };
+    const convertToMinutes = (time) => {
+        let splitTime = time.split(':');
+        return Number(splitTime[0] * 60) + Number(splitTime[1]); //Convert military time to minutes
+    };
 
-        if (time.hours > 12) { //Convert military time to 12-hour format
-            time.hours = time.hours - 12;
-            time.meridiem = "PM"
-        } else if (time.hours === 0) { //Set midnight to 12 instead of 0
-            time.hours = 12;
-        }
-        for (const unit in time) { //Add leading zero for single digits
-            if (time[unit] < 10) {
-                time[unit] = "0" + time[unit];
-            }
-        };
+    const update = (zone, sunset, sunrise) => {
+        let present = new Date(); // Thu Apr 06 2023 15:29:04 GMT-0700 (Pacific Daylight Time)
+        let date = present.toLocaleString('default', { timeZone: zone, weekday: 'long', month: 'long', day: 'numeric' }); // Timezone-specific Weekday, Month, Day
+        let now = present.toLocaleString('default', { timeZone: zone, hour12: false }); // Timezone-specific MM/DD/YYYY, HH:MM:SS
+        let hh = now.substring(10, 12); //Get hours
+        let mm = now.substring(13, 15); //Get minutes
+        let ss = now.substring(16); //Get seconds
+        let amPM = "AM"; //Get meridiem
+        let militaryTime = now.substring(10, 15); // HH:MM:SS
+        checkSun(convertToMinutes(militaryTime), sunset, sunrise); //Match background with time of day
+        if (hh > 12) { //Convert military time to 12-hour format
+            hh = hh - 12;
+            if (hh < 10) hh = "0" + hh; //If converted hours becomes a single digit, add leading zero
+            amPM = "PM";
+        } else if (hh === 12) amPM = "PM"; //Set noon to PM
+        else if (hh === 0) hh = 12; //Set midnight to 12 instead of 0
 
-        hours.innerText = time.hours
-        minutes.innerText = time.minutes;
-        seconds.innerText = time.seconds;
-        meridiem.innerText = time.meridiem;
-        document.querySelector('.weekday').innerText = weekday;
-        document.querySelector('.month').innerText = month;
-        document.querySelector('.day').innerText = day;
-
-        checkTime(); //Check current time of day (night/evening/daytime)
-    }
-
-    const set = () => {
-        update(); //Set initial time
-        setInterval(update, 1000); //Update time every second
-    }
-
-    let video = document.querySelector('video');
+        hours.innerText = hh;
+        minutes.innerText = mm;
+        seconds.innerText = ss;
+        meridiem.innerText = amPM;
+        document.querySelector('.date').innerText = date;
+    };
+    let timer;
+    const set = (timezone, sunset, sunrise) => {
+        update(timezone, sunset, sunrise); //Set initial time
+        clearInterval(timer); //Clear old timers when new cities are searched
+        timer = setInterval(update, 1000, timezone, sunset, sunrise); //Update time every second
+    };
+    const video = document.querySelector('video');
     const changeBG = (src) => {
         if (src !== video.getAttribute('src')) { //If current time of day is different from background
-            video.setAttribute('src', src) //Update background
+            video.setAttribute('src', src); //Update background
         }
-    }
-    const checkTime = () => {
-        if ((meridiem.innerText === "AM" && (hours.innerText < 7 || hours.innerText === '12')) || (meridiem.innerText === "PM" && hours.innerText > 9)) { //If time is between 10PM - 7AM
+    };
+    const checkSun = (time, sunset, sunrise) => {
+        if (time > sunset + 120 || time < sunrise) { //If time is between 2 hours after sunset, and sunrise
             changeBG('videos/garden-night.mp4'); //Use night background
-        } else if (meridiem.innerText === "PM" && (hours.innerText < 10 || hours.innerText > 4)) { //If time is between 5PM - 10PM
+        } else if (time > sunset - 60) { //Else if time is greater than 1 hour before sunset
             changeBG('videos/garden-evening.mp4'); //Use evening background
-        } else { //7AM - 5PM
+        } else { //Else time must be between sunrise, & 1 hour before sunset
             changeBG('videos/garden-day.mp4'); //Use day background
         }
-    }
-    return { set }
+    };
+
+    const findWeekday = (dateStr) => {
+        let date = new Date(dateStr); //Create Date object from YYYY-MM-DD string
+        return date.toUTCString().substring(0, 3); //Return the weekday abbreviation
+    };
+    return { convertToMinutes, set, findWeekday };
 })();
 
 const city = (() => {
+    const form = document.querySelector('form');
     const input = document.querySelector('input');
     const location = document.querySelector('.location');
     const search = document.querySelector('.search');
     const listen = () => {
+        form.addEventListener('submit', (e) => { //When enter is pressed in input,
+            e.preventDefault(); //Don't refresh page
+            input.blur();
+            geocode.find(input.value); //Find the city
+        });
         input.addEventListener('mouseenter', () => { //When hovering over input
             location.setAttribute('trigger', 'loop'); //Animate location icon
-        })
+        });
         input.addEventListener('mouseleave', () => { //When not hovering over input
             location.setAttribute('trigger', 'loop-on-hover'); //Only animate when hovering over icon
-        })
+        });
         input.addEventListener('focusin', () => { //When input is active
             search.classList.remove('hidden'); //Show search icon
-        })
-        input.addEventListener('focusout', () => { //When input is not active
+        });
+        input.addEventListener('focusout', (e) => { //When input is no longer active
             search.classList.add('hidden'); //Hide search icon
-        })
+            setTimeout(() => { //Wait an extra tick to check which element removed the focus
+                if (document.activeElement.tagName === 'BUTTON') { //If search button was clicked
+                    geocode.find(input.value); //Find the city
+                } else {
+                    geocode.check(input.value); //Check if city was changed
+                }
+                search.classList.add('hidden'); //Hide search icon
+            }, 1);
+        });
         location.addEventListener('click', () => { //When location icon is clicked
             input.focus();
             input.setSelectionRange(input.value.length, input.value.length); //Place cursor at the end
-        })
-    }
-    return { listen }
+        });
+    };
+    return { listen };
 })();
 
 export { moment, city };

@@ -43,7 +43,87 @@ lord-icon {
     width: 100%;
 }
 
-.weather-today {
+.search {
+    background: none;
+    border: none;
+}
+
+#errorMsg {
+    visibility: hidden;
+    margin: auto;
+    background-color: rgba(255, 0, 0, 0.7);
+    backdrop-filter: blur(2px);
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    color: white;
+    font-weight: 700;
+    text-align: center;
+    border-radius: 10px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    transform: translate(-50%);
+    top: 80px;
+    font-size: 16px;
+}
+
+#errorMsg.show {
+    visibility: visible;
+    -webkit-animation: fade-in 0.3s, fade-out 0.5s 2.5s;
+    animation: fade-in 0.3s, fade-out 0.5s 2.5s;
+}
+
+@-webkit-keyframes fade-in {
+    from {
+        top: 0;
+        opacity: 0;
+    }
+
+    to {
+        top: 80px;
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        top: 0;
+        opacity: 0;
+    }
+
+    to {
+        top: 80px;
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes fade-out {
+    from {
+        top: 80px;
+        opacity: 1;
+    }
+
+    to {
+        top: 0;
+        opacity: 0;
+    }
+}
+
+@keyframes fade-out {
+    from {
+        top: 80px;
+        opacity: 1;
+    }
+
+    to {
+        top: 0;
+        opacity: 0;
+    }
+}
+
+.current-weather {
+    display: grid;
+    justify-items: right;
     position: relative;
     width: fit-content;
     margin: 0 2.5rem 0 auto;
@@ -54,17 +134,17 @@ lord-icon {
     text-align: right;
 }
 
-.current {
+.conditions {
     display: flex;
     align-items: center;
     font-weight: 600;
 }
 
-.current img {
+.conditions img {
     width: 7rem;
 }
 
-.current>span {
+.conditions>span {
     font-size: 4rem;
 }
 
@@ -74,14 +154,15 @@ lord-icon {
     grid-template-columns: 1rem 1rem;
 }
 
-.units span {
+.degrees span {
     cursor: pointer;
     font-weight: 700;
 }
 
-.units .faded {
+.degrees .faded {
     color: rgba(255, 255, 255, 0.5);
     font-weight: 500;
+    grid-column-start: 2;
 }
 
 .low {
@@ -90,7 +171,7 @@ lord-icon {
 
 .details {
     display: grid;
-    grid-template-rows: repeat(6,2rem);
+    grid-template-rows: repeat(6, 2rem);
     align-items: center;
     position: relative;
     top: -1.5rem;
@@ -160,11 +241,7 @@ lord-icon {
 .date {
     font-size: 1.5rem;
     margin-bottom: 5px;
-}
-
-.month,
-.day {
-    margin-left: 8px;
+    word-spacing: 8px;
 }
 
 .daily-weather {
