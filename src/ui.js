@@ -15,11 +15,11 @@ const moment = (() => {
         let present = new Date(); // Thu Apr 06 2023 15:29:04 GMT-0700 (Pacific Daylight Time)
         let date = present.toLocaleString('default', { timeZone: zone, weekday: 'long', month: 'long', day: 'numeric' }); // Timezone-specific Weekday, Month, Day
         let now = present.toLocaleString('default', { timeZone: zone, hour12: false }); // Timezone-specific MM/DD/YYYY, HH:MM:SS
-        let hh = now.substring(10, 12); //Get hours
-        let mm = now.substring(13, 15); //Get minutes
-        let ss = now.substring(16); //Get seconds
+        let hh = now.substring(now.length - 8, now.length - 6); //Get hours
+        let mm = now.substring(now.length - 5, now.length - 3); //Get minutes
+        let ss = now.substring(now.length - 2); //Get seconds
         let amPM = "AM"; //Get meridiem
-        let militaryTime = now.substring(10, 15); // HH:MM:SS
+        let militaryTime = now.substring(now.length - 8); // HH:MM:SS
         checkSun(convertToMinutes(militaryTime), sunset, sunrise); //Match background with time of day
         if (hh > 12) { //Convert military time to 12-hour format
             hh = hh - 12;
@@ -83,7 +83,7 @@ const city = (() => {
         input.addEventListener('focusin', () => { //When input is active
             search.classList.remove('hidden'); //Show search icon
         });
-        input.addEventListener('focusout', (e) => { //When input is no longer active
+        input.addEventListener('focusout', () => { //When input is no longer active
             search.classList.add('hidden'); //Hide search icon
             setTimeout(() => { //Wait an extra tick to check which element removed the focus
                 if (document.activeElement.tagName === 'BUTTON') { //If search button was clicked
@@ -102,4 +102,14 @@ const city = (() => {
     return { listen };
 })();
 
-export { moment, city };
+const units = (() => {
+    const city = document.querySelector('input');
+    const listen = (btn) => {
+        btn.addEventListener('click', () => {
+            btn.innerText === 'F' ? geocode.find(city.value, true) : geocode.find(city.value, false); //Switch between imperial & metric units for temperature & wind speed
+        });
+    };
+    return { listen };
+})();
+
+export { moment, city, units };

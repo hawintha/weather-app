@@ -11,7 +11,7 @@ const geocode = (() => {
     const check = (newCity) => {
         if (newCity !== current) find(newCity); //If city changed, find the new city's location
     };
-    const find = async (city) => {
+    const find = async (city, isMetric) => {
         try {
             const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}`);
             const data = await response.json(); //Convert data to JSON
@@ -21,7 +21,7 @@ const geocode = (() => {
             country = data.results[0].country;
             current = data.results[0].name;
             input.value = `${current}, ${country}`; //Add country to input value
-            weather.find(latitude, longitude, timezone); //Find weather data
+            weather.find(latitude, longitude, timezone, isMetric); //Find weather data
         } catch { //If city could not be found
             const msg = document.querySelector("#errorMsg");
             msg.className = "show";
@@ -33,9 +33,13 @@ const geocode = (() => {
 })();
 
 const weather = (() => {
-    const find = async (latitude, longitude, timezone) => {
+    const find = async (latitude, longitude, timezone, isMetric) => {
         try {
-            const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,relativehumidity_2m,apparent_temperature,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=${timezone}`);
+            let url;
+            if (isMetric) url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,relativehumidity_2m,apparent_temperature,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset&current_weather=true&temperature_unit=celsius&windspeed_unit=kmh&timezone=${timezone}`; //Metric units
+            else url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,relativehumidity_2m,apparent_temperature,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=${timezone}`; // Imperial units
+
+            const response = await fetch(url);
             const data = await response.json(); //Convert data to JSON
 
             let hour = data.current_weather.time.substring(11, 13).replace(/^0+(\d)/, '$1'); //Get current hour & remove leading zero except for one ie.) midnight 00 becomes 0
@@ -50,9 +54,9 @@ const weather = (() => {
             let lows = data.daily.temperature_2m_min; //Get daily min temps
             let sunrise = moment.convertToMinutes(data.daily.sunrise[0].substring(11)); //Set current day's sunrise time in minutes
             let sunset = moment.convertToMinutes(data.daily.sunset[0].substring(11)); //Set current day's sunset time in minutes
-            
+
             moment.set(timezone, sunset, sunrise); //Set time
-            weatherDisplays.current(currentCode, currentTemp, apparent, wind, humidity, highs[0], lows[0]); //Display current weather data
+            weatherDisplays.current(currentCode, currentTemp, apparent, wind, humidity, highs[0], lows[0], isMetric); //Display current weather data
             document.querySelector('.daily-weather').replaceChildren(); //Remove old forecasts
             for (let i = 0; i < 7; i++) { //For each weekday's forecast,
                 weatherDisplays.daily(codes[i], dates[i], highs[i], lows[i]); //Show the data

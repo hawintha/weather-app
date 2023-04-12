@@ -1,10 +1,10 @@
-import { moment } from './ui.js';
+import { moment, units } from './ui.js';
 import { weather } from './api.js';
 const weatherDisplays = (() => {
     const weatherIcons = ["icons/sunny.svg", "icons/partly-cloudy.svg", "icons/fog.svg", "icons/drizzle.svg", "icons/drizzle-freezing.svg", "icons/rain.svg", "icons/rain-freezing.svg", "icons/snow.svg", "icons/hail.svg", "icons/rain-showers.svg", "icons/snow-showers.svg", "icons/thunderstorms.svg", "icons/thunderstorms-hail.svg"];
     const weatherTypes = ["Clear Sky", "Partly Cloudy", "Fog", "Drizzle", "Freezing Drizzle", "Rain", "Freezing Rain", "Snow", "Hail", "Rain Showers", "Snow Showers", "Thunderstorms", "Thunderstorms & Hail"];
 
-    const current = (code, current, apparent, windSpd, humidity, max, min) => {
+    const current = (code, current, apparent, windSpd, humidity, max, min, isMetric) => {
         const parent = document.querySelector('.current-weather');
         parent.replaceChildren(); //Clear old forecast
         const conditions = document.createElement('div');
@@ -17,20 +17,19 @@ const weatherDisplays = (() => {
         const temp = document.createElement('span');
         temp.innerText = current;
         conditions.appendChild(temp);
+
         const degrees = document.createElement('div');
         degrees.classList.add("degrees");
         conditions.appendChild(degrees);
         const symbol = document.createElement('span');
         symbol.innerText = "°";
         degrees.appendChild(symbol);
-        const fahrenheit = document.createElement('span');
-        fahrenheit.innerText = "F";
-        fahrenheit.classList.add("fahrenheit");
-        degrees.appendChild(fahrenheit);
-        const celsius = document.createElement('span');
-        celsius.innerText = "C";
-        celsius.classList.add("celsius", "faded");
-        degrees.appendChild(celsius);
+        const letter = document.createElement('span');
+        isMetric ? letter.innerText = "C" : letter.innerText = "F";
+        letter.classList.add("letter");
+        degrees.appendChild(letter);
+        units.listen(letter); //Add event listeners to enable toggling between imperial/metric units
+
         const details = document.createElement('div');
         details.classList.add("details");
         parent.appendChild(details);
@@ -39,13 +38,13 @@ const weatherDisplays = (() => {
         description.classList.add("description");
         details.appendChild(description);
         const highLow = document.createElement('span');
-        highLow.innerText = `High: ${max}°/Low: ${min}°`;
+        highLow.innerText = `High: ${max}° | Low: ${min}°`;
         details.appendChild(highLow);
         const feelsLike = document.createElement('span');
         feelsLike.innerText = `Feels like: ${apparent}°`;
         details.appendChild(feelsLike);
         const wind = document.createElement('span');
-        wind.innerText = `Wind: ${windSpd}mph`;
+        isMetric ? wind.innerText = `Wind: ${windSpd} km/h` : wind.innerText = `Wind: ${windSpd} mph`;
         details.appendChild(wind);
         const percentage = document.createElement('span');
         percentage.innerText = `Humidity: ${humidity}%`;
