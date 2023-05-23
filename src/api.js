@@ -1,35 +1,33 @@
-import { moment } from './ui.js';
-import { weatherDisplays } from './render.js';
+import { moment, cityInput } from './ui.js';
+import { forecast, city } from './render.js';
 
 const geocode = (() => {
-    let current = "Seattle";
-    let latitude;
-    let longitude;
-    let timezone;
-    let country;
     const input = document.querySelector('input');
-    const check = (newCity) => {
-        if (newCity !== current) find(newCity); //If city changed, find the new city's location
-    };
-    const find = async (city, isMetric) => {
+
+    const suggest = async (name) => {
+        const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${name}`);
+        const data = await response.json(); //Convert data to JSON
+        if (data.results) city.suggest(data.results); //Display suggestions
+    }
+
+    const find = async (name, id, isMetric) => {
+        document.querySelector('.loader').classList.remove('hidden'); //Show loader
         try {
-            const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}`);
-            const data = await response.json(); //Convert data to JSON
-            latitude = data.results[0].latitude;
-            longitude = data.results[0].longitude;
-            timezone = data.results[0].timezone;
-            country = data.results[0].country;
-            current = data.results[0].name;
-            input.value = `${current}, ${country}`; //Add country to input value
-            weather.find(latitude, longitude, timezone, isMetric); //Find weather data
+            let url;
+            if (name) url = `https://geocoding-api.open-meteo.com/v1/search?name=${name}`;
+            else if (id) url = `https://geocoding-api.open-meteo.com/v1/get?id=${id}`;
+            const response = await fetch(url); //Find city
+            let data = await response.json(); //Convert data to JSON
+            if (data.results) data = data.results[0]; //If obj has many results, use the first one
+            input.value = city.format(data); //Display formatted city in input
+            input.setAttribute('data-id', data.id); //Set unique city ID to input
+            weather.find(data.latitude, data.longitude, data.timezone, isMetric); //Find weather data
         } catch { //If city could not be found
-            const msg = document.querySelector("#errorMsg");
-            msg.className = "show";
-            setTimeout(function () { msg.className = msg.className.replace("show", ""); }, 3000); //Show error message for 3 seconds
-            input.select(); //Select all text to prepare edit
+            cityInput.message("The city you entered could not be found. Please check the name and try again.");
         }
+        document.querySelector('.loader').classList.add('hidden'); //Hide loader
     };
-    return { check, find };
+    return { suggest, find };
 })();
 
 const weather = (() => {
@@ -37,8 +35,7 @@ const weather = (() => {
         try {
             let url;
             if (isMetric) url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,relativehumidity_2m,apparent_temperature,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset&current_weather=true&temperature_unit=celsius&windspeed_unit=kmh&timezone=${timezone}`; //Metric units
-            else url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,relativehumidity_2m,apparent_temperature,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=${timezone}`; // Imperial units
-
+            else url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,relativehumidity_2m,apparent_temperature,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=${timezone}`; //Imperial units
             const response = await fetch(url);
             const data = await response.json(); //Convert data to JSON
 
@@ -56,10 +53,10 @@ const weather = (() => {
             let sunset = moment.convertToMinutes(data.daily.sunset[0].substring(11)); //Set current day's sunset time in minutes
 
             moment.set(timezone, sunset, sunrise); //Set time
-            weatherDisplays.current(currentCode, currentTemp, apparent, wind, humidity, highs[0], lows[0], isMetric); //Display current weather data
+            forecast.current(currentCode, currentTemp, apparent, wind, humidity, highs[0], lows[0], isMetric); //Display current weather data
             document.querySelector('.daily-weather').replaceChildren(); //Remove old forecasts
             for (let i = 0; i < 7; i++) { //For each weekday's forecast,
-                weatherDisplays.daily(codes[i], dates[i], highs[i], lows[i]); //Show the data
+                forecast.daily(codes[i], dates[i], highs[i], lows[i]); //Show the data
             }
         } catch (error) {
             console.log(error);

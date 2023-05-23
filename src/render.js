@@ -1,6 +1,6 @@
 import { moment, units } from './ui.js';
 import { weather } from './api.js';
-const weatherDisplays = (() => {
+const forecast = (() => {
     const weatherIcons = ["icons/sunny.svg", "icons/partly-cloudy.svg", "icons/fog.svg", "icons/drizzle.svg", "icons/drizzle-freezing.svg", "icons/rain.svg", "icons/rain-freezing.svg", "icons/snow.svg", "icons/hail.svg", "icons/rain-showers.svg", "icons/snow-showers.svg", "icons/thunderstorms.svg", "icons/thunderstorms-hail.svg"];
     const weatherTypes = ["Clear Sky", "Partly Cloudy", "Fog", "Drizzle", "Freezing Drizzle", "Rain", "Freezing Rain", "Snow", "Hail", "Rain Showers", "Snow Showers", "Thunderstorms", "Thunderstorms & Hail"];
 
@@ -78,4 +78,24 @@ const weatherDisplays = (() => {
     return { current, daily };
 })();
 
-export { weatherDisplays };
+const city = (() => {
+    const format = (data) => {
+        if (data.country === 'United States') return `${data.name}, ${data.admin1}, USA`; //City, State, USA
+        else if (!data.country) return `${data.name}, ${data.country_code}`; //Use country code if no country Ex) Puerto Rico
+        else return `${data.name}, ${data.country}`; //No state for non-USA cities
+    }
+
+    const suggest = (results) => {
+        const suggestions = document.querySelector('.suggestions');
+        suggestions.replaceChildren(); //Close search suggestions
+        results.forEach((data) => { //For each suggested city
+            const item = document.createElement('li'); //Display as a dropdown list
+            item.innerText = format(data); //Display city in input
+            item.setAttribute('data-id', data.id); //Set unique city ID
+            suggestions.appendChild(item);
+        })
+    }
+    return { format, suggest };
+})();
+
+export { forecast, city };

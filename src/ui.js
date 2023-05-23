@@ -1,45 +1,11 @@
 import { geocode } from './api.js';
 
 const moment = (() => {
-    let hours = document.querySelector('.hours');
-    let minutes = document.querySelector('.minutes');
-    let seconds = document.querySelector('.seconds');
-    let meridiem = document.querySelector('.meridiem');
-
     const convertToMinutes = (time) => {
         let splitTime = time.split(':');
         return Number(splitTime[0] * 60) + Number(splitTime[1]); //Convert military time to minutes
     };
 
-    const update = (zone, sunset, sunrise) => {
-        let present = new Date(); // Thu Apr 06 2023 15:29:04 GMT-0700 (Pacific Daylight Time)
-        let date = present.toLocaleString('default', { timeZone: zone, weekday: 'long', month: 'long', day: 'numeric' }); // Timezone-specific Weekday, Month, Day
-        let now = present.toLocaleString('default', { timeZone: zone, hour12: false }); // Timezone-specific MM/DD/YYYY, HH:MM:SS
-        let hh = now.substring(now.length - 8, now.length - 6); //Get hours
-        let mm = now.substring(now.length - 5, now.length - 3); //Get minutes
-        let ss = now.substring(now.length - 2); //Get seconds
-        let amPM = "AM"; //Get meridiem
-        let militaryTime = now.substring(now.length - 8); // HH:MM:SS
-        checkSun(convertToMinutes(militaryTime), sunset, sunrise); //Match background with time of day
-        if (hh > 12) { //Convert military time to 12-hour format
-            hh = hh - 12;
-            if (hh < 10) hh = "0" + hh; //If converted hours becomes a single digit, add leading zero
-            amPM = "PM";
-        } else if (hh === 12) amPM = "PM"; //Set noon to PM
-        else if (hh === 0) hh = 12; //Set midnight to 12 instead of 0
-
-        hours.innerText = hh;
-        minutes.innerText = mm;
-        seconds.innerText = ss;
-        meridiem.innerText = amPM;
-        document.querySelector('.date').innerText = date;
-    };
-    let timer;
-    const set = (timezone, sunset, sunrise) => {
-        update(timezone, sunset, sunrise); //Set initial time
-        clearInterval(timer); //Clear old timers when new cities are searched
-        timer = setInterval(update, 1000, timezone, sunset, sunrise); //Update time every second
-    };
     const video = document.querySelector('video');
     const changeBG = (src) => {
         if (src !== video.getAttribute('src')) { //If current time of day is different from background
@@ -55,6 +21,37 @@ const moment = (() => {
             changeBG('videos/garden-day.mp4'); //Use day background
         }
     };
+    const update = (zone, sunset, sunrise) => {
+        let present = new Date(); // Thu Apr 06 2023 15:29:04 GMT-0700 (Pacific Daylight Time)
+        let date = present.toLocaleString('default', { timeZone: zone, weekday: 'long', month: 'long', day: 'numeric' }); // Timezone-specific Weekday, Month, Day
+        let now = present.toLocaleString('default', { timeZone: zone, hour12: false }); // Timezone-specific MM/DD/YYYY, HH:MM:SS
+        let hh = now.substring(now.length - 8, now.length - 6); //Get hours
+        let mm = now.substring(now.length - 5, now.length - 3); //Get minutes
+        let ss = now.substring(now.length - 2); //Get seconds
+        let amPM = "AM"; //Get meridiem
+        let militaryTime = now.substring(now.length - 8); // HH:MM:SS
+        checkSun(convertToMinutes(militaryTime), sunset, sunrise); //Match background with time of day
+        if (+hh > 12) { //PM to midnight
+            hh = hh - 12; //Convert military time to 12-hour format
+            if (+hh < 10) hh = "0" + hh; //If converted hours becomes a single digit, add leading zero
+            if (+hh === 12) amPM = "AM"; //Set midnight to AM
+            else amPM = "PM"; //Use PM
+        }
+        else if (+hh === 12) amPM = "PM"; //Set noon to PM
+        else if (+hh === 0) hh = 12; //Set midnight to 12 instead of 0
+
+        document.querySelector('.hours').innerText = hh;
+        document.querySelector('.minutes').innerText = mm;
+        document.querySelector('.seconds').innerText = ss;
+        document.querySelector('.meridiem').innerText = amPM;
+        document.querySelector('.date').innerText = date;
+    };
+    let timer;
+    const set = (timezone, sunset, sunrise) => {
+        update(timezone, sunset, sunrise); //Set initial time
+        clearInterval(timer); //Clear old timers when new cities are searched
+        timer = setInterval(update, 1000, timezone, sunset, sunrise); //Update time every second
+    };
 
     const findWeekday = (dateStr) => {
         let date = new Date(dateStr); //Create Date object from YYYY-MM-DD string
@@ -63,17 +60,36 @@ const moment = (() => {
     return { convertToMinutes, set, findWeekday };
 })();
 
-const city = (() => {
+const cityInput = (() => {
     const form = document.querySelector('form');
     const input = document.querySelector('input');
     const location = document.querySelector('.location');
     const search = document.querySelector('.search');
+    const suggestions = document.querySelector('.suggestions');
+
+    const validate = () => { //Don't allow >2 commas
+        if (!input.value.split(', ')[2]) {
+            geocode.find(input.value); //Find the city
+        } else {
+            message("Either use the \"City, Country\" format or select the correct city.");
+            input.value = input.value.split(', ')[0]; //Remove everything after 1st comma
+            geocode.suggest(input.value); //Display city suggestions
+        }
+    }
     const listen = () => {
+        form.addEventListener('input', () => { //When input value changes,
+            if (input.value !== '') geocode.suggest(input.value); //Display city suggestions
+        });
         form.addEventListener('submit', (e) => { //When enter is pressed in input,
             e.preventDefault(); //Don't refresh page
-            input.blur();
-            geocode.find(input.value); //Find the city
+            validate(); //If in correct format, find the city
         });
+        suggestions.addEventListener('mousedown', (e) => { //When a suggested city is clicked
+            geocode.find(null, e.target.getAttribute('data-id')); //Find city by ID
+        })
+        search.addEventListener('mousedown', (e) => {
+            validate(); //If in correct format, find the city
+        })
         input.addEventListener('mouseenter', () => { //When hovering over input
             location.setAttribute('trigger', 'loop'); //Animate location icon
         });
@@ -82,34 +98,35 @@ const city = (() => {
         });
         input.addEventListener('focusin', () => { //When input is active
             search.classList.remove('hidden'); //Show search icon
+            geocode.suggest(input.value); //Display city suggestions
         });
         input.addEventListener('focusout', () => { //When input is no longer active
             search.classList.add('hidden'); //Hide search icon
-            setTimeout(() => { //Wait an extra tick to check which element removed the focus
-                if (document.activeElement.tagName === 'BUTTON') { //If search button was clicked
-                    geocode.find(input.value); //Find the city
-                } else {
-                    geocode.check(input.value); //Check if city was changed
-                }
-                search.classList.add('hidden'); //Hide search icon
-            }, 1);
+            suggestions.replaceChildren(); //Close search suggestions
         });
         location.addEventListener('click', () => { //When location icon is clicked
             input.focus();
             input.setSelectionRange(input.value.length, input.value.length); //Place cursor at the end
         });
     };
-    return { listen };
+    const message = (text) => {
+        const msg = document.querySelector("#errorMsg");
+        msg.className = "show";
+        msg.innerText = text;
+        setTimeout(function () { msg.className = msg.className.replace("show", ""); }, 3000); //Show error message for only 3 seconds
+        input.select(); //Select all text to prepare edit
+    }
+    return { listen, message };
 })();
 
 const units = (() => {
-    const city = document.querySelector('input');
     const listen = (btn) => {
         btn.addEventListener('click', () => {
-            btn.innerText === 'F' ? geocode.find(city.value, true) : geocode.find(city.value, false); //Switch between imperial & metric units for temperature & wind speed
+            let cityID = document.querySelector('form input').getAttribute('data-id');
+            btn.innerText === 'F' ? geocode.find(null, cityID, true) : geocode.find(null, cityID, false); //Switch between imperial & metric units for temperature & wind speed
         });
     };
     return { listen };
 })();
 
-export { moment, city, units };
+export { moment, cityInput, units };
