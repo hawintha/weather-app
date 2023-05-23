@@ -6,21 +6,30 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <title>Weather App</title>
 </head>
 
 <body>
     <video src="videos/garden-day.mp4" type="video/mp4" autoplay muted loop></video>
-    <form action="" class="city">
+
+    <div class="loader">
+        <lord-icon class="cloud" src="https://cdn.lordicon.com/qtiwxsuo.json" style="width:250px;height:250px"
+            colors="primary:#604FFF,secondary:#5FD0FF" trigger="loop"></lord-icon>
+    </div>
+
+    <form action="" class="city" autocomplete="off">
         <lord-icon class="location" src="https://cdn.lordicon.com/elzslyvl.json" style="width:40px;height:40px"
             colors="primary:#fdfbfb,secondary:#ebedee"></lord-icon>
-        <input type="text" name="" id="" placeholder="City" value="Seattle">
+        <input type="text" placeholder="City" value="Seattle">
+        <ul class="suggestions"></ul>
+
         <button type="submit" class="search hidden">
             <lord-icon src="https://cdn.lordicon.com/zniqnylq.json" style="width:35px;height:35px"
                 colors="primary:#fdfbfb,secondary:#ebedee" trigger="loop-on-hover" delay="1000"></lord-icon>
         </button>
     </form>
-    <p id="errorMsg">The city you entered could not be found. Please check the name and try again. </p>
+    <p id="errorMsg"></p>
 
     <section class="current-weather"></section>
 
@@ -38,6 +47,8 @@
     </section>
 
     <section class="daily-weather"></section>
+
+    <a class="bx bxl-github" href="https://github.com/hawintha" target="_blank"></a>
 
     <script src="main.js"></script>
     <script src="https://cdn.lordicon.com/qjzruarw.js"></script>
